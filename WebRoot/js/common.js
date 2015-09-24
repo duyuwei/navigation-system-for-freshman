@@ -1,0 +1,2 @@
+// JavaScript Document
+ons.bootstrap();

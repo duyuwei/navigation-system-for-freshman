@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+	<class name="com.nsff.student.entity.Grade" table="grade">
+		<id name="id" type="java.lang.String"></id>
+		<property name="name" type="java.lang.String"></property>
+		
+		<many-to-one name="college" column="collegeID" lazy="false" class="com.nsff.student.entity.College"></many-to-one>
+		
+		<set name="students" cascade="save-update,delete" table="student" inverse="false">
+			<key column="classID"></key>
+			<one-to-many class="com.nsff.student.entity.Student" />
+		</set>
+	</class>
+
+</hibernate-mapping>
+	
