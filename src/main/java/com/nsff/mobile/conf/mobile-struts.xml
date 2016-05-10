@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+	"-//Apache Software Foundation//DTD Struts Configuration 2.3//EN"
+	"http://struts.apache.org/dtds/struts-2.3.dtd">
+
+<struts>
+	<package name="mobile-action" namespace="/mobile" extends="struts-default">
+		<action name="mobile_*" class="com.nsff.mobile.action.loginAction" method="{1}">
+			<result name="login">/WEB-INF/jsp/mobile/main/login.jsp</result>
+			<result name="guide">/WEB-INF/jsp/mobile/main/guide.jsp</result>
+			<result name="test">/WEB-INF/jsp/mobile/main/test.jsp</result>
+		</action>
+	</package>
+
+</struts>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+	"-//Apache Software Foundation//DTD Struts Configuration 2.3//EN"
+	"http://struts.apache.org/dtds/struts-2.3.dtd">
+
+<struts>
+	<package name="user-action" namespace="/user" extends="struts-default">
+		<action name="teacher_*" class="com.nsff.user.action.TeacherAction" method="{1}">
+			<result name="{1}">/WEB-INF/jsp/user/teacher/{1}.jsp</result>
+			<result name="list" type="redirectAction">
+				<param name="actionName">teacher_listUI</param>
+			</result>
+			
+		</action>
+		
+		<action name="loc_*" class="com.nsff.user.action.LocAction" method="{1}">
+			<result name="{1}">/WEB-INF/jsp/user/loc/{1}.jsp</result>
+			<result name="list" type="redirectAction">
+				<param name="actionName">loc_listUI</param>
+			</result>
+			
+		</action>
+		
+		
+		<action name="login_*" class="com.nsff.user.action.LoginAction" method="{1}">
+			<result name="login">/WEB-INF/jsp/user/login.jsp</result>	
+		</action>
+		
+		
+		
+	</package>
+
+</struts>

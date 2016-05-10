@@ -1,0 +1,47 @@
+﻿*{
+    margin:0;
+    padding:0;
+}
+
+div#hint {
+    height:15%;
+    z-index:3;
+    background-color:#FBFBFB;
+}
+div#hint_img_div {
+    float:left;
+    height:100%;
+    overflow: hidden;
+}
+
+div#hint_img_div_2 {
+    height:50px;
+    margin:auto;
+
+}
+
+img#hint_img {
+    height:50px;
+    vertical-align: middle;
+
+}
+
+div#hint_p_div {
+    float:left;
+}
+p#hint_p {
+    font-size:20px;
+    font-family:仿宋;
+    text-align:center;
+    margin-top:20px;
+}
+
+div#map {
+     height:85%;
+     z-index:2;
+     border-width:2px;
+     border:solid;
+     border-color:red;
+}
+
+
