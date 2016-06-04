@@ -1,28 +1,35 @@
 ﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=" gb2312" />
-<title>nsff</title>
-<link rel="stylesheet" type="text/css" href="../css/onsen-css-components.css" />
-<link rel="stylesheet" type="text/css" href="../css/onsenui.css" />
-<script type="text/javascript" src="../js/angular/angular.js"></script>
-<script type="text/javascript" src="../js/onsenui.js"></script>
-<script type="text/javascript" src="../js/common.js"></script>
-<script type="text/javascript" src="../js/jquery-1.11.3.min.js"></script>
-<link href="../css/MyCss.css" rel="stylesheet" />
+	<meta http-equiv="Content-Type" content="text/html; charset=" gb2312" />
+	<title>nsff</title>
+	<link rel="stylesheet" href="http://cache.amap.com/lbs/static/main1119.css"/>
+	<link rel="stylesheet" type="text/css" href="../css/onsen-css-components.css" />
+	<link rel="stylesheet" type="text/css" href="../css/onsenui.css" />
+	<script type="text/javascript" src="http://webapi.amap.com/maps?v=1.3&key=b0f837d5e6fb78c607e725d7942b7d9b&plugin=AMap.Walking,AMap.ToolBar"></script>
+	<script type="text/javascript" src="../js/angular/angular.js"></script>
+	<script type="text/javascript" src="../js/onsenui.js"></script>
+	<script type="text/javascript" src="../js/common.js"></script>
+	<script type="text/javascript" src="../js/jquery-1.11.3.min.js"></script>
+	<link href="../css/MyCss.css" rel="stylesheet" />
+	<link rel="stylesheet" href="http://cache.amap.com/lbs/static/main1119.css"/>
+	<style type="text/css">
+			#panel {
+				position: fixed;
+				opacity: 0.80;
+				background-color: white;
+				max-height: 15%;
+				overflow-y: auto;
+				top: 44px;
+				width: 100%;
+				border: medium;
+			}
+	</style>
+	<script src="../js/ajax.js"></script>
 
-<script src="Scripts/supermap/SuperMap.Include.js"></script>
-
-<script src="../js/ajax.js"></script>
-<!--<script type="text/javascript">
-    function disp_alert()
-    {
-    alert("我是一个消息框！")
-    }
-    </script>
-    -->
 
 <script type="text/javascript">
+	var map,toolBar,walking;
 	var xloc, yloc, locationName, stepNumber = 0, TimeO;
 	var isStart = 0;
 	var isNavigation = false;
@@ -145,13 +152,17 @@
 
 	$(function() {
 		myNavigator.on('postpush', function(event) {
+			console.info("push");
+			console.info(isNavigation);
 			//根据locationName，判断是否需要开始导航，进入特定的一些页面才进入导航
 			if (isNavigation && locationName == "开始入学导航" && stepNumber == 0) {
-				confirm_step0();
-				return;
+				//confirm_step0();
+				console.info("f1");
+				//return;
 			}
 
 			if (isNavigation) {
+				console.info("f2");
 				init();
 			}
 
@@ -177,21 +188,15 @@
 		console.info(locationName);
 		if (locationName == "开始入学导航") {
 			//得到开始入学导航的导航步骤
-			ajaxUtil.getStep();
+			//ajaxUtil.getStep();
 		}
 		//得到终点坐标
-		getLoc(stepNumber + 1);
+		//getLoc(stepNumber + 1);
 		//xloc = 4158.5057275359;
 		//yloc = -3151.8838173298;
 		//xloc = ajaxUtil.getLocX(stepNumber + 1);
 		//yloc = ajaxUtil.getLocY(stepNumber + 1);
 		isNavigation = true;
-
-	}
-
-
-	//加载地图
-	function init() {
 
 	}
 
@@ -220,23 +225,34 @@
 	<!------------------------------------我的主页----------------------------------------->
 	<!----------------------地图导航界面导航---------------------------->
 
-	<ons-template id="daohang"> <ons-page> <ons-toolbar>
-	<div class="left">
-		<ons-back-button>Back</ons-back-button>
-	</div>
-	<div class="center">实时导航</div>
-	<!--<div class="right"><input type="button" value="开始导航" onclick="geoLocation();" /></div>--> </ons-toolbar>
-	<div id="hint">
-		<div id="hint_img_div">
-			<img id="hint_img" src="Images/hint/walk.png" />
-		</div>
-		<div id="hint_p_div">
-			<p id="hint_p">从此处开始出发</p>
-		</div>
-	</div>
-	<div id="map"></div>
+	<ons-template id="daohang">
+		<ons-page>
+			<ons-toolbar>
+				<div class="left">
+					<ons-back-button>Back</ons-back-button>
+				</div>
+				<div class="center">实时导航</div>
+			</ons-toolbar>
+			<div id="container"></div>
+			<div id="panel"></div>
 
-	</ons-page> </ons-template>
+		</ons-page>
+	</ons-template>
+
+	<!----------------------地图导航详情---------------------------->
+	<ons-template id="xiangqing">
+		<ons-page>
+			<ons-toolbar>
+				<div class="left">
+					<ons-back-button>回到地图</ons-back-button>
+				</div>
+				<div class="center">详情</div>
+			</ons-toolbar>
+			<div id="panel"></div>
+		</ons-page>
+	</ons-template>
+
+
 	<!----------------------地图导航界面导航---------------------------->
 
 	<ons-template id="mainPlace"> <ons-page> <ons-toolbar>
@@ -452,6 +468,30 @@
 	手机号：12312423523 </ons-list-item> <ons-list-item> 微信： </ons-list-item> <ons-list-item> QQ： </ons-list-item> <ons-list-item> 教龄： </ons-list-item> <ons-list-item> 职称： </ons-list-item> </ons-list> </ons-page> </ons-template>
 	<!----------------------------------------------我的导员----------------------------------------------------->
 
+	<script type="text/javascript">
+		function init() {
+			console.info("地图开始");
+			toolBar = new AMap.ToolBar({
+				visible: true
+			}),
+
+			map = new AMap.Map("container", {
+				resizeEnable: true,
+				center: [116.397428, 39.90923],//地图中心点
+				zoom: 13 //地图显示的缩放级别
+			});
+
+			map.addControl(toolBar);
+
+			walking = new AMap.Walking({
+				map: map,
+				panel: "panel"
+			});
+			//根据起终点坐标规划步行路线
+			walking.search([116.379028, 39.865042], [116.427281, 39.903719]);
+		}
+
+	</script>
 
 </body>
 </html>
