@@ -1,497 +1,944 @@
 ﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=" gb2312" />
-	<title>nsff</title>
-	<link rel="stylesheet" href="http://cache.amap.com/lbs/static/main1119.css"/>
-	<link rel="stylesheet" type="text/css" href="../css/onsen-css-components.css" />
-	<link rel="stylesheet" type="text/css" href="../css/onsenui.css" />
-	<script type="text/javascript" src="http://webapi.amap.com/maps?v=1.3&key=b0f837d5e6fb78c607e725d7942b7d9b&plugin=AMap.Walking,AMap.ToolBar"></script>
-	<script type="text/javascript" src="../js/angular/angular.js"></script>
-	<script type="text/javascript" src="../js/onsenui.js"></script>
-	<script type="text/javascript" src="../js/common.js"></script>
-	<script type="text/javascript" src="../js/jquery-1.11.3.min.js"></script>
-	<link href="../css/MyCss.css" rel="stylesheet" />
-	<link rel="stylesheet" href="http://cache.amap.com/lbs/static/main1119.css"/>
-	<style type="text/css">
-			#panel {
-				position: fixed;
-				opacity: 0.80;
-				background-color: white;
-				max-height: 15%;
-				overflow-y: auto;
-				top: 44px;
-				width: 100%;
-				border: medium;
-			}
-	</style>
-	<script src="../js/ajax.js"></script>
+    <meta http-equiv="Content-Type" content="text/html; charset=" gb2312
+    " />
+    <title>nsff</title>
+    <link rel="stylesheet" href="http://cache.amap.com/lbs/static/main1119.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/onsen-css-components.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/onsenui.css"/>
+    <script type="text/javascript" src="http://webapi.amap.com/maps?v=1.3&key=b0f837d5e6fb78c607e725d7942b7d9b&plugin=AMap.Walking,AMap.ToolBar"></script>
+    <script type="text/javascript" src="../js/angular/angular.js"></script>
+    <script type="text/javascript" src="../js/onsenui.js"></script>
+    <script type="text/javascript" src="../js/common.js"></script>
+    <script type="text/javascript" src="../js/ajax.js"></script>
+    <script type="text/javascript" src="../js/jquery-1.11.3.min.js"></script>
+    <link href="../css/MyCss.css" rel="stylesheet"/>
+    <style type="text/css">
+        #panel {
+            position: fixed;
+            opacity: 0.80;
+            background-color: white;
+            max-height: 15%;
+            overflow-y: auto;
+            top: 44px;
+            width: 100%;
+            border: medium;
+        }
+
+        #container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #nearbyPersion {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .button-group {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            font-size: 12px;
+            padding: 10px;
+        }
+
+        .button-group .button {
+            height: 28px;
+            line-height: 28px;
+            background-color: #0D9BF2;
+            color: #FFF;
+            border: 0;
+            outline: none;
+            padding-left: 5px;
+            padding-right: 5px;
+            border-radius: 3px;
+            margin-bottom: 4px;
+            cursor: pointer;
+        }
+    </style>
 
 
-<script type="text/javascript">
-	var map,toolBar,walking;
-	var xloc, yloc, locationName, stepNumber = 0, TimeO;
-	var isStart = 0;
-	var isNavigation = false;
+    <script type="text/javascript">
+        var map, walking;
+        var toolBar =  new AMap.ToolBar({
+            visible: true
+        });
+        var xloc, yloc, locationName, stepNumber = 0, TimeO;
+        var isStart = 0;
+        var isNavigation = false;
+        var isNearby = false;
 
-	function alert1() {
+        var personMap;
 
-		ons.notification.alert({
-			message : '确定退出吗？'
-		});
+        function alert1() {
 
-	};
+            ons.notification.alert({
+                message: '确定退出吗？'
+            });
 
-	function confirm() {
-		ons.notification.confirm({
-			message : '是否开始下一次导航 ?',
-			callback : function(idx) {
-				switch (idx) {
-				case 0:
-					if (stepNumber == 1 || stepNumber == 2) {
-						stepNumber = 3;
-						//写入数据库
-						ajaxUtil.setStep(stepNumber)
-					}
-					if (stepNumber == 2 || stepNumber == 4) {
-						stepNumber = stepNumber + 1;
-						//写入数据库
-						ajaxUtil.setStep(stepNumber)
-					}
-					break;
-				case 1:
-					if (stepNumber == 1 || stepNumber == 2) {
-						stepNumber = 3;
-						//写入数据库
-						ajaxUtil.setStep(stepNumber)
-					}
-					if (stepNumber == 2 || stepNumber == 4) {
-						stepNumber = stepNumber + 1;
-						//写入数据库
-						ajaxUtil.setStep(stepNumber)
-					}
-					//获取到达报到点的坐标
-					getLoc(stepNumber + 1);
-					//xloc = 4158.5057275359;
-					//yloc = -3151.8838173298;
-					//xloc = ajaxUtil.getLocX(stepNumber + 1);
-					//yloc = ajaxUtil.getLocY(stepNumber + 1);
-					clearElements();
-					clearTimeout(TimeO);
-					isStart = 0;
-					geoLocation();
-					break;
-				}
-			}
-		});
-	}
+        }
+        ;
 
-	//0未开始，1绿色通道，2交费处，3报到点，4宿舍，5报道导航完成
-	function confirm_step0() {
-		ons.notification.confirm({
-			message : '请确定是否已经缴费 ?',
-			callback : function(idx) {
-				switch (idx) {
-				case 0:
-					stepNumber = stepNumber + 3;
-					//写进数据库
-					ajaxUtil.setStep(stepNumber)
-					//获取到达报到点的坐标
-					getLoc(stepNumber + 1);
-					//xloc = 4158.5057275359;
-					//yloc = -3151.8838173298;
-					//xloc = ajaxUtil.getLocX(stepNumber + 1);
-					//yloc = ajaxUtil.getLocY(stepNumber + 1);
-					init();
-					geoLocation(locationName);
-					break;
-				case 1:
-					confirm_step1();
-					break;
-				}
-			}
-		});
-	}
+        function confirm() {
+            ons.notification.confirm({
+                message: '是否开始下一次导航 ?',
+                callback: function (idx) {
+                    switch (idx) {
+                        case 0:
+                            if (stepNumber == 1 || stepNumber == 2) {
+                                stepNumber = 3;
+                                //写入数据库
+                                ajaxUtil.setStep(stepNumber)
+                            }
+                            if (stepNumber == 2 || stepNumber == 4) {
+                                stepNumber = stepNumber + 1;
+                                //写入数据库
+                                ajaxUtil.setStep(stepNumber)
+                            }
+                            break;
+                        case 1:
+                            if (stepNumber == 1 || stepNumber == 2) {
+                                stepNumber = 3;
+                                //写入数据库
+                                ajaxUtil.setStep(stepNumber)
+                            }
+                            if (stepNumber == 2 || stepNumber == 4) {
+                                stepNumber = stepNumber + 1;
+                                //写入数据库
+                                ajaxUtil.setStep(stepNumber)
+                            }
+                            //获取到达报到点的坐标
+                            getLoc(stepNumber + 1);
+                            //xloc = 4158.5057275359;
+                            //yloc = -3151.8838173298;
+                            //xloc = ajaxUtil.getLocX(stepNumber + 1);
+                            //yloc = ajaxUtil.getLocY(stepNumber + 1);
+                            clearElements();
+                            clearTimeout(TimeO);
+                            isStart = 0;
+                            geoLocation();
+                            break;
+                    }
+                }
+            });
+        }
 
-	function confirm_step1() {
-		ons.notification.confirm({
-			message : '是否选择绿色通道 ?',
-			callback : function(idx) {
-				switch (idx) {
-				case 0:
-					stepNumber = stepNumber + 2;
-					//写进数据库
-					ajaxUtil.setStep(stepNumber)
+        //0未开始，1绿色通道，2交费处，3报到点，4宿舍，5报道导航完成
+        function confirm_step0() {
+            ons.notification.confirm({
+                message: '请确定是否已经缴费 ?',
+                title: '请确认',
+                buttonLabels: ['是', '否'],
+                callback: function (idx) {
+                    switch (idx) {
+                        case 0:
+                            stepNumber = stepNumber + 3;
+                            //写进数据库
+                            ajaxUtil.setStep(stepNumber);
+                            console.info("已经交费,step: " + stepNumber);
 
-					//获取到达报到点的坐标
-					getLoc(stepNumber + 1);
-					//xloc = 4158.5057275359;
-					//yloc = -3151.8838173298;
-					//xloc = ajaxUtil.getLocX(stepNumber + 1);
-					//yloc = ajaxUtil.getLocY(stepNumber + 1);
-					init();
-					geoLocation(locationName);
-					break;
-				case 1:
-					stepNumber = stepNumber + 1;
-					//写进数据库
-					ajaxUtil.setStep(stepNumber)
-					//获取到达报到点的坐标
-					getLoc(stepNumber + 1);
-					//xloc = 4158.5057275359;
-					//yloc = -3151.8838173298;
-					//xloc = ajaxUtil.getLocX(stepNumber + 1);
-					//yloc = ajaxUtil.getLocY(stepNumber + 1);
-					init();
-					geoLocation(locationName);
-					break;
-				}
-			}
-		});
-	}
+                            mapInit();//初始化地图
+                            break;
+                        case 1:
+                            confirm_step1();
+                            break;
+                    }
+                }
+            });
+        }
 
-	$(function() {
-		myNavigator.on('postpush', function(event) {
-			console.info("push");
-			console.info(isNavigation);
-			//根据locationName，判断是否需要开始导航，进入特定的一些页面才进入导航
-			if (isNavigation && locationName == "开始入学导航" && stepNumber == 0) {
-				//confirm_step0();
-				console.info("f1");
-				//return;
-			}
+        function confirm_step1() {
+            ons.notification.confirm({
+                message: '是否选择绿色通道 ?',
+                title: '请确认',
+                buttonLabels: ['是', '否'],
+                callback: function (idx) {
+                    switch (idx) {
+                        case 1:
+                            stepNumber = stepNumber + 2;
+                            //写进数据库
+                            ajaxUtil.setStep(stepNumber)
+                            mapInit();
+                            break;
+                        case 0:
+                            stepNumber = stepNumber + 1;
+                            //写进数据库
+                            ajaxUtil.setStep(stepNumber)
+                            //获取到达报到点的坐标
+                            mapInit();
+                            break;
+                    }
+                }
+            });
+        }
 
-			if (isNavigation) {
-				console.info("f2");
-				init();
-			}
+        $(function () {
+            myNavigator.on('postpush', function (event) {
+                console.info("pushmap")
+                //根据locationName，判断是否需要开始导航，进入特定的一些页面才进入导航
+                if (isNavigation && locationName == "开始入学导航" && stepNumber == 0) {
+                    confirm_step0();
+                    console.info("not in nav");
+                    return;
+                }
 
-			//$(function () {
-			//    setTimeout("geoLocation()", 1000);
-			//});
+                if (isNavigation) {
+                    console.info("in nav");
+                    mapInit();
+                }
 
-		});
+                if (isNearby) {
+                    console.info("in nearby");
+                    myNearby();
+                }
 
-		myNavigator.on('postpop', function(event) {
-			isStart = 0;
-			isNavigation = false;
+            });
 
-		});
+            myNavigator.on('postpop', function (event) {
+                isStart = 0;
+                isNavigation = false;
+                isNearby = false;
 
-		//TimeO = setTimeout(geoLocation(), 30000);
-		//clearTimeout(TimeO);
-	});
+            });
 
-	function getReady(id) {
+            //TimeO = setTimeout(geoLocation(), 30000);
+            //clearTimeout(TimeO);
+        });
 
-		locationName = $.trim(id.innerText);
-		console.info(locationName);
-		if (locationName == "开始入学导航") {
-			//得到开始入学导航的导航步骤
-			//ajaxUtil.getStep();
-		}
-		//得到终点坐标
-		//getLoc(stepNumber + 1);
-		//xloc = 4158.5057275359;
-		//yloc = -3151.8838173298;
-		//xloc = ajaxUtil.getLocX(stepNumber + 1);
-		//yloc = ajaxUtil.getLocY(stepNumber + 1);
-		isNavigation = true;
+        function getReady(id) {
 
-	}
+            locationName = $.trim(id.innerText);
+            console.info(locationName);
+            if (locationName == "开始入学导航") {
+                //得到开始入学导航的导航步骤
+                ajaxUtil.getStep();
+                console.info("step: " + stepNumber);
+                isNavigation = true;
+            }
+            ;
+            if (locationName == "附近的人") {
+                isNearby = true;
+            }
+            ;
 
 
+        }
 
-</script>
+        function getLoc(stepN) {
+            $.ajax({
+                url: global_path + 'student/student_getLocByStep.action',
+                async: false,
+                type: "post",
+                dataType: 'json',
+                data: 'student.step=' + stepN,
+                success: function (data) {
+                    if (null != data && data != "") {
+                        xloc = data.locX;
+                        yloc = data.locY;
+                    }
+                },
+                error: function (result) {
+                }
 
+            });
+        }
+
+
+    </script>
 
 
 </head>
 
 <body>
 
-	<ons-tabbar> <ons-tab page="zhuye" label="我的主页" icon="ion-home" active="true"></ons-tab> <ons-tab page="help" label="求助学长" icon="ion-chatbox-working"></ons-tab> <ons-tab page="flow"
-		label="报到流程" icon="ion-ios-pricetag"></ons-tab> <ons-tab page="myme" label="我的信息" icon="ion-ios-cog"></ons-tab> </ons-tabbar>
+<ons-tabbar>
+    <ons-tab page="zhuye" label="我的主页" icon="ion-home" active="true"></ons-tab>
+    <ons-tab page="help" label="求助学长" icon="ion-chatbox-working"></ons-tab>
+    <ons-tab page="flow" label="报到流程" icon="ion-ios-pricetag"></ons-tab>
+    <ons-tab page="myme" label="我的信息" icon="ion-ios-cog"></ons-tab>
+</ons-tabbar>
 
-	<!------------------------------------我的主页----------------------------------------->
-	<ons-template id="zhuye"> <ons-navigator title="Navigator" var="myNavigator" ons-postpush="true" postpush="alert('postpush')" postpop="alert('postpop')"> <ons-page>
-	<ons-toolbar>
-	<div class="center">我的主页</div>
-	</ons-toolbar> <ons-list> <ons-list-item modifier="chevron" onclick="getReady(this);myNavigator.pushPage('daohang', { animation: 'slide' }); "> 开始入学导航 </ons-list-item> <ons-list-item modifier="chevron"
-		onclick="myNavigator.pushPage('mainPlace', { animation : 'slide' } )"> 导航至学校主要地点 </ons-list-item> <ons-list-item modifier="chevron"
-		onclick="myNavigator.pushPage('mySchool', { animation : 'slide' } )"> 我的学校 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('laoxiang', { animation : 'slide' } )">
-	老乡会 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('sLife', { animation : 'slide' } )"> 校园生活 </ons-list-item> </ons-list> </ons-page> </ons-navigator> </ons-template>
+<!------------------------------------我的主页----------------------------------------->
+<ons-template id="zhuye">
+    <ons-navigator title="Navigator" var="myNavigator" ons-postpush="true" postpush="alert('postpush')" postpop="alert('postpop')">
+        <ons-page>
+            <ons-toolbar>
+                <div class="center">我的主页</div>
+            </ons-toolbar>
+            <ons-list>
+                <ons-list-item modifier="chevron" onclick="getReady(this);myNavigator.pushPage('daohang', { animation: 'slide' }); "> 开始入学导航</ons-list-item>
+                <ons-list-item modifier="chevron" onclick="getReady(this);myNavigator.pushPage('nearby', { animation: 'slide' }); "> 附近的人</ons-list-item>
+                <ons-list-item modifier="chevron"
+                               onclick="myNavigator.pushPage('mainPlace', { animation : 'slide' } )"> 导航至学校主要地点
+                </ons-list-item>
+                <ons-list-item modifier="chevron"
+                               onclick="myNavigator.pushPage('mySchool', { animation : 'slide' } )"> 我的学校
+                </ons-list-item>
+                <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('laoxiang', { animation : 'slide' } )">
+                    老乡会
+                </ons-list-item>
+                <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('sLife', { animation : 'slide' } )"> 校园生活</ons-list-item>
+            </ons-list>
+        </ons-page>
+    </ons-navigator>
+</ons-template>
 
-	<!------------------------------------我的主页----------------------------------------->
-	<!----------------------地图导航界面导航---------------------------->
+<!------------------------------------我的主页----------------------------------------->
+<!----------------------地图导航界面导航---------------------------->
 
-	<ons-template id="daohang">
-		<ons-page>
-			<ons-toolbar>
-				<div class="left">
-					<ons-back-button>Back</ons-back-button>
-				</div>
-				<div class="center">实时导航</div>
-			</ons-toolbar>
-			<div id="container"></div>
-			<div id="panel"></div>
+<ons-template id="daohang">
+    <ons-page>
+        <ons-toolbar>
+            <div class="left">
+                <ons-back-button>Back</ons-back-button>
+            </div>
+            <div class="center">实时导航</div>
+        </ons-toolbar>
+        <div id="container"></div>
+        <div id="panel"></div>
+        <div class="button-group">
+            <input id="calc" onclick="nextStep()" type="button" class="button" value="我已到达"/>
+        </div>
 
-		</ons-page>
-	</ons-template>
+    </ons-page>
+</ons-template>
 
-	<!----------------------地图导航详情---------------------------->
-	<ons-template id="xiangqing">
-		<ons-page>
-			<ons-toolbar>
-				<div class="left">
-					<ons-back-button>回到地图</ons-back-button>
-				</div>
-				<div class="center">详情</div>
-			</ons-toolbar>
-			<div id="panel"></div>
-		</ons-page>
-	</ons-template>
+<!----------------------地图导航详情---------------------------->
+<ons-template id="xiangqing">
+    <ons-page>
+        <ons-toolbar>
+            <div class="left">
+                <ons-back-button>回到地图</ons-back-button>
+            </div>
+            <div class="center">详情</div>
+        </ons-toolbar>
+        <div id="panel"></div>
+    </ons-page>
+</ons-template>
 
-
-	<!----------------------地图导航界面导航---------------------------->
-
-	<ons-template id="mainPlace"> <ons-page> <ons-toolbar>
-	<div class="left">
-		<ons-back-button>Back</ons-back-button>
-	</div>
-	<div class="center">请选择地点分类</div>
-	</ons-toolbar> <ons-list> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('jiaoxuelou', { animation : 'slide' } )"> 教学楼 </ons-list-item> <ons-list-item modifier="chevron"
-		onclick="myNavigator.pushPage('shitang', { animation : 'slide' } )"> 食堂 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('sushe', { animation : 'slide' } )">
-	宿舍 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('tiyu', { animation : 'slide' } )"> 体育运动 </ons-list-item> <ons-list-item modifier="chevron"
-		onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 图书馆 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('computer', { animation : 'slide' } )">
-	计算机中心 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 校医院 </ons-list-item> <ons-list-item modifier="chevron"
-		onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 学术交流中心（嘉园） </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('chaoshi', { animation : 'slide' } )">
-	校园超市 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('xiyu', { animation : 'slide' } )"> 洗浴中心 </ons-list-item> </ons-list> </ons-page> </ons-template>
-
-	<!-----------------------------------------教学楼------------------------------------------------------------>
-	<ons-template id="jiaoxuelou"> <ons-page> <ons-toolbar>
-	<div class="left">
-		<ons-back-button>Back</ons-back-button>
-	</div>
-	<div class="center">教学楼</div>
-	</ons-toolbar> <ons-list> <ons-list-header style="background-color:#33FFFF">主校区</ons-list-header> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
-	主教 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 行政楼 </ons-list-item> <ons-list-item modifier="chevron"
-		onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 电阶教室 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
-	第二教学楼 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 第三教学楼 </ons-list-item> <ons-list-item modifier="chevron"
-		onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 第四教学楼 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
-	第五教学楼 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 第六教学楼 </ons-list-item> <ons-list-item modifier="chevron"
-		onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 第七教学楼 </ons-list-item> <ons-list-header style="background-color:#33FFFF">西校区</ons-list-header> <ons-list-item modifier="chevron"
-		onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 第八教学楼 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
-	第九教学楼 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 第十教学楼 </ons-list-item> <ons-list-header style="background-color:#33FFFF">东校区（科信）</ons-list-header>
-	<ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 第十一教学楼 </ons-list-item> <ons-list-item modifier="chevron"
-		onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 第十二教学楼 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
-	第十三教学楼 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 第十四教学楼 </ons-list-item> </ons-list> </ons-page> </ons-template>
-	<!-----------------------------------------教学楼------------------------------------------------------------>
-	<!------------------------------------------食堂-------------------------------------------------------------->
-	<ons-template id="shitang"> <ons-page> <ons-toolbar>
-	<div class="left">
-		<ons-back-button>Back</ons-back-button>
-	</div>
-	<div class="center">食堂</div>
-	</ons-toolbar> <ons-list> <ons-list-header style="background-color:#33FFFF">主校食堂</ons-list-header> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
-	第一餐厅 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 第二餐厅 </ons-list-item> <ons-list-item modifier="chevron"
-		onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 好味道（德顺斋） </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
-	好时尚 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 红泥餐厅（米兰） </ons-list-item> <ons-list-item modifier="chevron"
-		onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 湖南风味餐厅 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
-	中和饮食广场 </ons-list-item> <ons-list-header style="background-color:#33FFFF">东校区（科信）食堂</ons-list-header> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
-	东苑饮食广场 </ons-list-item> <ons-list-header style="background-color:#33FFFF">西校区食堂</ons-list-header> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
-	公诚饮食广场 </ons-list-item> </ons-list> </ons-page> </ons-template>
-	<!------------------------------------------食堂-------------------------------------------------------------->
-	<!--------------------------------------------宿舍------------------------------------------------------------>
-	<ons-template id="sushe"> <ons-page> <ons-toolbar>
-	<div class="left">
-		<ons-back-button>Back</ons-back-button>
-	</div>
-	<div class="center">宿舍</div>
-	</ons-toolbar> <ons-list> <ons-list-header style="background-color:#33FFFF">主校区宿舍</ons-list-header> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
-	思静斋 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 思敏斋 </ons-list-item> <ons-list-item modifier="chevron"
-		onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 思信斋 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
-	思齐斋 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 思远斋 </ons-list-item> <ons-list-item modifier="chevron"
-		onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 临雅轩 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
-	临风轩 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 听湖轩 </ons-list-item> <ons-list-item modifier="chevron"
-		onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 观湖轩 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
-	鉴湖轩 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 宏民苑 </ons-list-item> <ons-list-item modifier="chevron"
-		onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 宏善苑 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
-	宏德苑 </ons-list-item> <ons-list-header style="background-color:#33FFFF">东校区（科信）宿舍</ons-list-header> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
-	致远楼 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 明志楼 </ons-list-item> <ons-list-item modifier="chevron"
-		onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 成学楼 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
-	广才楼 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 养德楼 </ons-list-item> <ons-list-item modifier="chevron"
-		onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 崇礼楼 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
-	修身楼 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 明德楼 </ons-list-item> <ons-list-item modifier="chevron"
-		onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 知行楼 </ons-list-item> <ons-list-header style="background-color:#33FFFF">西校区宿舍</ons-list-header> <ons-list-item modifier="chevron"
-		onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 朝曦楼 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
-	朝晖楼 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 朝华楼 </ons-list-item> <ons-list-item modifier="chevron"
-		onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 朝阳楼 </ons-list-item> </ons-list> </ons-page> </ons-template>
-
-	<!--------------------------------------------宿舍------------------------------------------------------------>
-	<!------------------------------------------体育运动------------------------------------------------------------->
-	<ons-template id="tiyu"> <ons-page> <ons-toolbar>
-	<div class="left">
-		<ons-back-button>Back</ons-back-button>
-	</div>
-	<div class="center">体育运动</div>
-	</ons-toolbar> <ons-list> <ons-list-header style="background-color:#33FFFF">主校区</ons-list-header> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
-	主校塑胶篮球场 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 主校网球场 </ons-list-item> <ons-list-item modifier="chevron"
-		onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 主校操场 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
-	主校乒乓球场 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 主校体育馆 </ons-list-item> <ons-list-header style="background-color:#33FFFF">东校区（科信）</ons-list-header>
-	<ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 篮球场 </ons-list-item> <ons-list-item modifier="chevron"
-		onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 东校区操场（体育场） </ons-list-item> <ons-list-header style="background-color:#33FFFF">西校区</ons-list-header> <ons-list-item
-		modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 篮球场（乒乓球场） </ons-list-item> </ons-list> </ons-page> </ons-template>
-
-	<!------------------------------------------体育运动------------------------------------------------------------->
-	<!-------------------------------------------计算机中心---------------------------------------------------------->
-	<ons-template id="computer"> <ons-page> <ons-toolbar>
-	<div class="left">
-		<ons-back-button>Back</ons-back-button>
-	</div>
-	<div class="center">计算机中心</div>
-	</ons-toolbar> <ons-list> <ons-list-header style="background-color:#33FFFF">主校区</ons-list-header> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
-	主校区计算机中心 </ons-list-item> <ons-list-header style="background-color:#33FFFF">东校区（科信）</ons-list-header> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
-	东校区校区计算机中心 </ons-list-item> </ons-list> </ons-page> </ons-template>
-	<!-------------------------------------------计算机中心---------------------------------------------------------->
-	<!----------------------------------------------超市------------------------------------------------------------>
-	<ons-template id="chaoshi"> <ons-page> <ons-toolbar>
-	<div class="left">
-		<ons-back-button>Back</ons-back-button>
-	</div>
-	<div class="center">校园超市</div>
-	</ons-toolbar> <ons-list> <ons-list-header style="background-color:#33FFFF">主校区</ons-list-header> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
-	鉴园超市 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 塑胶篮球场小超市 </ons-list-item> <ons-list-header style="background-color:#33FFFF">东校区（科信）</ons-list-header>
-	<ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 小超市 </ons-list-item> </ons-list> </ons-page> </ons-template>
-	<!----------------------------------------------超市------------------------------------------------------------>
-	<!---------------------------------------------洗浴中心------------------------------------------------------->
-	<ons-template id="xiyu"> <ons-page> <ons-toolbar>
-	<div class="left">
-		<ons-back-button>Back</ons-back-button>
-	</div>
-	<div class="center">洗浴中心</div>
-	</ons-toolbar> <ons-list> <ons-list-header style="background-color:#33FFFF">主校区</ons-list-header> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
-	学生洗浴中心（理发） </ons-list-item> <ons-list-header style="background-color:#33FFFF">东校区（科信）</ons-list-header> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
-	学生洗浴中心 </ons-list-item> </ons-list> </ons-page> </ons-template>
-	<!---------------------------------------------洗浴中心------------------------------------------------------->
-	<!-----------------------------------------------校园生活---------------------------------------------------->
-	<ons-template id="sLife"> <ons-page> <ons-toolbar>
-	<div class="left">
-		<ons-back-button>Back</ons-back-button>
-	</div>
-	<div class="center">校园生活</div>
-	</ons-toolbar> <ons-list> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('common', { animation : 'slide' } )"> 学生会 </ons-list-item> <ons-list-item modifier="chevron"
-		onclick="myNavigator.pushPage('common', { animation : 'slide' } )"> 社团组织介绍 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('common', { animation : 'slide' } )">
-	校园一卡通 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('common', { animation : 'slide' } )"> 图书馆 </ons-list-item> </ons-list> </ons-page> </ons-template>
-	<!-----------------------------------------------校园生活---------------------------------------------------->
-	<!------------------------------------------------老乡会------------------------------------------------------>
-	<ons-template id="laoxiang"> <ons-page> <ons-toolbar>
-	<div class="left">
-		<ons-back-button>Back</ons-back-button>
-	</div>
-	<div class="center">老乡会信息</div>
-	</ons-toolbar> <ons-list> <ons-list-header style="background-color:#33FFFF">乡长信息</ons-list-header> <ons-list-item> 姓名：**** </ons-list-item> <ons-list-item> 手机号：12312423523 </ons-list-item> <ons-list-item>
-	微信： </ons-list-item> <ons-list-item> QQ： </ons-list-item> <ons-list-item> 学院专业： </ons-list-item> <ons-list-item> 年级： </ons-list-item> <ons-list-item> 老乡会QQ群： </ons-list-item> </ons-list> </ons-page> </ons-template>
-	<!------------------------------------------------老乡会------------------------------------------------------>
-	<!--------------------------------------------------我的学校------------------------------------------------>
-	<ons-template id="mySchool"> <ons-page> <ons-toolbar>
-	<div class="left">
-		<ons-back-button>Back</ons-back-button>
-	</div>
-	<div class="center">我的学校</div>
-	</ons-toolbar> <ons-list style=" padding-top:10px;"> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('common', { animation : 'slide' } )"> 学校简介 </ons-list-item> <ons-list-item
-		modifier="chevron" onclick="myNavigator.pushPage('common', { animation : 'slide' } )"> 学校领导班子 </ons-list-item> <ons-list-item modifier="chevron"
-		onclick="myNavigator.pushPage('common', { animation : 'slide' } )"> 荣誉校友 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('common', { animation : 'slide' } )">
-	校园风光 </ons-list-item> </ons-list> </ons-page> </ons-template>
-	<!--------------------------------------------------我的学校------------------------------------------------>
-	<!--------------------------------------------------common content----------------------------------------->
-	<ons-template id="common"> <ons-page> <ons-toolbar>
-	<div class="left">
-		<ons-back-button>Back</ons-back-button>
-	</div>
-	</ons-toolbar>
-	<p>信息正在完善中...</p>
-
-	</ons-page> </ons-template>
-
-	<!--------------------------------------------------common content----------------------------------------->
-	<!------------------------------------------------help---------------------------------------------------------->
-	<ons-template id="help"> <ons-page> <ons-toolbar>
-	<div class="center">求助学长</div>
-	</ons-toolbar> <ons-list> <ons-list-header style="background-color:#33FFFF">联系方式</ons-list-header> <ons-list-item>QQ：1234355667</ons-list-item> <ons-list-item>微信：12234354364</ons-list-item> <ons-list-item>手机号：183****4204</ons-list-item>
-
-	<ons-list-header style="background-color:#33FFFF">在线提问</ons-list-header> <section style="padding:8px"> <textarea class="textarea" ng-model="text2" placeholder="描述你的问题并留下你的联系方式"
-		style="width: 100%; height:150px;"></textarea> </section>
-
-	<form action="http://w3school.com.cn/example/html/form_action.asp" method="get">
-		<input type="submit" value="Submit" id="sub" style="margin-top:5px;width:200px;height:40px;line-height:35px;border:none;background-color:#33CCFF;margin-left:80px;" />
-	</form>
-	</ons-list-item> </ons-list> </ons-page> </ons-template>
-
-	<!------------------------------------------------help---------------------------------------------------------->
-	<!-------------------------------------------------tags-------------------------------------------------------->
-	<ons-template id="flow"> <ons-page> <ons-toolbar>
-	<div class="left">
-		<ons-back-button>Back</ons-back-button>
-	</div>
-	<div class="center">报到流程</div>
-	</ons-toolbar>
-	<p>导入张恒首页的流程图</p>
-	</ons-page> </ons-template>
-	<!-------------------------------------------------tags-------------------------------------------------------->
-	<!-------------------------------------------------me-------------------------------------------------------->
-
-	<ons-template id="myme"> <ons-navigator title="Navigator" var="myNavigator"> <ons-page> <ons-toolbar>
-	<div class="left">
-		<ons-back-button>Back</ons-back-button>
-	</div>
-	<div class="center">我的信息</div>
-	</ons-toolbar> <ons-list> <ons-list-header style="background-color:#33FFFF">基本信息</ons-list-header> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('common', { animation : 'slide' } )">
-	我的报到步骤 </ons-list-item> <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('medaoyuan', { animation : 'slide' } )"> 我的导员 </ons-list-item> <ons-list-item modifier="chevron"
-		onclick="myNavigator.pushPage('common', { animation : 'slide' } )"> 我的学院介绍 </ons-list-item> <ons-list-header style="background-color:#33FFFF">我的常用导航</ons-list-header> <ons-list-item
-		modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 到我的宿舍 </ons-list-item> <ons-list-item modifier="chevron"
-		onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 到我的学院 </ons-list-item> <ons-list-header style="background-color:#33FFFF">账号管理</ons-list-header> <ons-list-item modifier="chevron"
-		onclick="alert1()"> <!--<input type="button" onclick="alert('确定退出吗？')" value="显示消息框" />--> 退出 </ons-list-item> </ons-list>
-
-	<div style="margin:10px 0 0 10px;"></div>
+<!----------------------附近的人---------------------------->
+<ons-template id="nearby">
+    <ons-page>
+        <ons-toolbar>
+            <div class="left">
+                <ons-back-button>Back</ons-back-button>
+            </div>
+            <div class="center">附近的人</div>
+        </ons-toolbar>
+        <div id="nearbyPersion"></div>
+    </ons-page>
+</ons-template>
 
 
-	</ons-page> </ons-navigator> </ons-template>
-	<!-------------------------------------------------me-------------------------------------------------------->
-	<!----------------------------------------------我的导员----------------------------------------------------->
-	<ons-template id="medaoyuan"> <ons-page> <ons-toolbar>
-	<div class="left">
-		<ons-back-button>Back</ons-back-button>
-	</div>
-	<div class="center">我的导员</div>
-	</ons-toolbar> <ons-list> <ons-list-header style="background-color:#33FFFF">基本信息</ons-list-header> <ons-list-item> 姓名：**** </ons-list-item> <ons-list-item> 性别： </ons-list-item> <ons-list-item>
-	手机号：12312423523 </ons-list-item> <ons-list-item> 微信： </ons-list-item> <ons-list-item> QQ： </ons-list-item> <ons-list-item> 教龄： </ons-list-item> <ons-list-item> 职称： </ons-list-item> </ons-list> </ons-page> </ons-template>
-	<!----------------------------------------------我的导员----------------------------------------------------->
+<!----------------------地图导航界面导航---------------------------->
 
-	<script type="text/javascript">
-		function init() {
-			console.info("地图开始");
-			toolBar = new AMap.ToolBar({
-				visible: true
-			}),
+<ons-template id="mainPlace">
+    <ons-page>
+        <ons-toolbar>
+            <div class="left">
+                <ons-back-button>Back</ons-back-button>
+            </div>
+            <div class="center">请选择地点分类</div>
+        </ons-toolbar>
+        <ons-list>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('jiaoxuelou', { animation : 'slide' } )"> 教学楼</ons-list-item>
+            <ons-list-item modifier="chevron"
+                           onclick="myNavigator.pushPage('shitang', { animation : 'slide' } )"> 食堂
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('sushe', { animation : 'slide' } )">
+                宿舍
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('tiyu', { animation : 'slide' } )"> 体育运动</ons-list-item>
+            <ons-list-item modifier="chevron"
+                           onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 图书馆
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('computer', { animation : 'slide' } )">
+                计算机中心
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 校医院</ons-list-item>
+            <ons-list-item modifier="chevron"
+                           onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 学术交流中心（嘉园）
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('chaoshi', { animation : 'slide' } )">
+                校园超市
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('xiyu', { animation : 'slide' } )"> 洗浴中心</ons-list-item>
+        </ons-list>
+    </ons-page>
+</ons-template>
 
-			map = new AMap.Map("container", {
-				resizeEnable: true,
-				center: [116.397428, 39.90923],//地图中心点
-				zoom: 13 //地图显示的缩放级别
-			});
+<!-----------------------------------------教学楼------------------------------------------------------------>
+<ons-template id="jiaoxuelou">
+    <ons-page>
+        <ons-toolbar>
+            <div class="left">
+                <ons-back-button>Back</ons-back-button>
+            </div>
+            <div class="center">教学楼</div>
+        </ons-toolbar>
+        <ons-list>
+            <ons-list-header style="background-color:#33FFFF">主校区</ons-list-header>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
+                主教
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 行政楼</ons-list-item>
+            <ons-list-item modifier="chevron"
+                           onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 电阶教室
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
+                第二教学楼
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 第三教学楼</ons-list-item>
+            <ons-list-item modifier="chevron"
+                           onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 第四教学楼
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
+                第五教学楼
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 第六教学楼</ons-list-item>
+            <ons-list-item modifier="chevron"
+                           onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 第七教学楼
+            </ons-list-item>
+            <ons-list-header style="background-color:#33FFFF">西校区</ons-list-header>
+            <ons-list-item modifier="chevron"
+                           onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 第八教学楼
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
+                第九教学楼
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 第十教学楼</ons-list-item>
+            <ons-list-header style="background-color:#33FFFF">东校区（科信）</ons-list-header>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 第十一教学楼</ons-list-item>
+            <ons-list-item modifier="chevron"
+                           onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 第十二教学楼
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
+                第十三教学楼
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 第十四教学楼</ons-list-item>
+        </ons-list>
+    </ons-page>
+</ons-template>
+<!-----------------------------------------教学楼------------------------------------------------------------>
+<!------------------------------------------食堂-------------------------------------------------------------->
+<ons-template id="shitang">
+    <ons-page>
+        <ons-toolbar>
+            <div class="left">
+                <ons-back-button>Back</ons-back-button>
+            </div>
+            <div class="center">食堂</div>
+        </ons-toolbar>
+        <ons-list>
+            <ons-list-header style="background-color:#33FFFF">主校食堂</ons-list-header>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
+                第一餐厅
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 第二餐厅</ons-list-item>
+            <ons-list-item modifier="chevron"
+                           onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 好味道（德顺斋）
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
+                好时尚
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 红泥餐厅（米兰）</ons-list-item>
+            <ons-list-item modifier="chevron"
+                           onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 湖南风味餐厅
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
+                中和饮食广场
+            </ons-list-item>
+            <ons-list-header style="background-color:#33FFFF">东校区（科信）食堂</ons-list-header>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
+                东苑饮食广场
+            </ons-list-item>
+            <ons-list-header style="background-color:#33FFFF">西校区食堂</ons-list-header>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
+                公诚饮食广场
+            </ons-list-item>
+        </ons-list>
+    </ons-page>
+</ons-template>
+<!------------------------------------------食堂-------------------------------------------------------------->
+<!--------------------------------------------宿舍------------------------------------------------------------>
+<ons-template id="sushe">
+    <ons-page>
+        <ons-toolbar>
+            <div class="left">
+                <ons-back-button>Back</ons-back-button>
+            </div>
+            <div class="center">宿舍</div>
+        </ons-toolbar>
+        <ons-list>
+            <ons-list-header style="background-color:#33FFFF">主校区宿舍</ons-list-header>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
+                思静斋
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 思敏斋</ons-list-item>
+            <ons-list-item modifier="chevron"
+                           onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 思信斋
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
+                思齐斋
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 思远斋</ons-list-item>
+            <ons-list-item modifier="chevron"
+                           onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 临雅轩
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
+                临风轩
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 听湖轩</ons-list-item>
+            <ons-list-item modifier="chevron"
+                           onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 观湖轩
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
+                鉴湖轩
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 宏民苑</ons-list-item>
+            <ons-list-item modifier="chevron"
+                           onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 宏善苑
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
+                宏德苑
+            </ons-list-item>
+            <ons-list-header style="background-color:#33FFFF">东校区（科信）宿舍</ons-list-header>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
+                致远楼
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 明志楼</ons-list-item>
+            <ons-list-item modifier="chevron"
+                           onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 成学楼
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
+                广才楼
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 养德楼</ons-list-item>
+            <ons-list-item modifier="chevron"
+                           onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 崇礼楼
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
+                修身楼
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 明德楼</ons-list-item>
+            <ons-list-item modifier="chevron"
+                           onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 知行楼
+            </ons-list-item>
+            <ons-list-header style="background-color:#33FFFF">西校区宿舍</ons-list-header>
+            <ons-list-item modifier="chevron"
+                           onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 朝曦楼
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
+                朝晖楼
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 朝华楼</ons-list-item>
+            <ons-list-item modifier="chevron"
+                           onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 朝阳楼
+            </ons-list-item>
+        </ons-list>
+    </ons-page>
+</ons-template>
 
-			map.addControl(toolBar);
+<!--------------------------------------------宿舍------------------------------------------------------------>
+<!------------------------------------------体育运动------------------------------------------------------------->
+<ons-template id="tiyu">
+    <ons-page>
+        <ons-toolbar>
+            <div class="left">
+                <ons-back-button>Back</ons-back-button>
+            </div>
+            <div class="center">体育运动</div>
+        </ons-toolbar>
+        <ons-list>
+            <ons-list-header style="background-color:#33FFFF">主校区</ons-list-header>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
+                主校塑胶篮球场
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 主校网球场</ons-list-item>
+            <ons-list-item modifier="chevron"
+                           onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 主校操场
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
+                主校乒乓球场
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 主校体育馆</ons-list-item>
+            <ons-list-header style="background-color:#33FFFF">东校区（科信）</ons-list-header>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 篮球场</ons-list-item>
+            <ons-list-item modifier="chevron"
+                           onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 东校区操场（体育场）
+            </ons-list-item>
+            <ons-list-header style="background-color:#33FFFF">西校区</ons-list-header>
+            <ons-list-item
+                    modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 篮球场（乒乓球场）
+            </ons-list-item>
+        </ons-list>
+    </ons-page>
+</ons-template>
 
-			walking = new AMap.Walking({
-				map: map,
-				panel: "panel"
-			});
-			//根据起终点坐标规划步行路线
-			walking.search([116.379028, 39.865042], [116.427281, 39.903719]);
-		}
+<!------------------------------------------体育运动------------------------------------------------------------->
+<!-------------------------------------------计算机中心---------------------------------------------------------->
+<ons-template id="computer">
+    <ons-page>
+        <ons-toolbar>
+            <div class="left">
+                <ons-back-button>Back</ons-back-button>
+            </div>
+            <div class="center">计算机中心</div>
+        </ons-toolbar>
+        <ons-list>
+            <ons-list-header style="background-color:#33FFFF">主校区</ons-list-header>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
+                主校区计算机中心
+            </ons-list-item>
+            <ons-list-header style="background-color:#33FFFF">东校区（科信）</ons-list-header>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
+                东校区校区计算机中心
+            </ons-list-item>
+        </ons-list>
+    </ons-page>
+</ons-template>
+<!-------------------------------------------计算机中心---------------------------------------------------------->
+<!----------------------------------------------超市------------------------------------------------------------>
+<ons-template id="chaoshi">
+    <ons-page>
+        <ons-toolbar>
+            <div class="left">
+                <ons-back-button>Back</ons-back-button>
+            </div>
+            <div class="center">校园超市</div>
+        </ons-toolbar>
+        <ons-list>
+            <ons-list-header style="background-color:#33FFFF">主校区</ons-list-header>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
+                鉴园超市
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 塑胶篮球场小超市</ons-list-item>
+            <ons-list-header style="background-color:#33FFFF">东校区（科信）</ons-list-header>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )"> 小超市</ons-list-item>
+        </ons-list>
+    </ons-page>
+</ons-template>
+<!----------------------------------------------超市------------------------------------------------------------>
+<!---------------------------------------------洗浴中心------------------------------------------------------->
+<ons-template id="xiyu">
+    <ons-page>
+        <ons-toolbar>
+            <div class="left">
+                <ons-back-button>Back</ons-back-button>
+            </div>
+            <div class="center">洗浴中心</div>
+        </ons-toolbar>
+        <ons-list>
+            <ons-list-header style="background-color:#33FFFF">主校区</ons-list-header>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
+                学生洗浴中心（理发）
+            </ons-list-item>
+            <ons-list-header style="background-color:#33FFFF">东校区（科信）</ons-list-header>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('daohang', { animation : 'slide' } )">
+                学生洗浴中心
+            </ons-list-item>
+        </ons-list>
+    </ons-page>
+</ons-template>
+<!---------------------------------------------洗浴中心------------------------------------------------------->
+<!-----------------------------------------------校园生活---------------------------------------------------->
+<ons-template id="sLife">
+    <ons-page>
+        <ons-toolbar>
+            <div class="left">
+                <ons-back-button>Back</ons-back-button>
+            </div>
+            <div class="center">校园生活</div>
+        </ons-toolbar>
+        <ons-list>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('common', { animation : 'slide' } )"> 学生会</ons-list-item>
+            <ons-list-item modifier="chevron"
+                           onclick="myNavigator.pushPage('common', { animation : 'slide' } )"> 社团组织介绍
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('common', { animation : 'slide' } )">
+                校园一卡通
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('common', { animation : 'slide' } )"> 图书馆</ons-list-item>
+        </ons-list>
+    </ons-page>
+</ons-template>
+<!-----------------------------------------------校园生活---------------------------------------------------->
+<!------------------------------------------------老乡会------------------------------------------------------>
+<ons-template id="laoxiang">
+    <ons-page>
+        <ons-toolbar>
+            <div class="left">
+                <ons-back-button>Back</ons-back-button>
+            </div>
+            <div class="center">老乡会信息</div>
+        </ons-toolbar>
+        <ons-list>
+            <ons-list-header style="background-color:#33FFFF">乡长信息</ons-list-header>
+            <ons-list-item> 姓名：****</ons-list-item>
+            <ons-list-item> 手机号：12312423523</ons-list-item>
+            <ons-list-item>
+                微信：
+            </ons-list-item>
+            <ons-list-item> QQ：</ons-list-item>
+            <ons-list-item> 学院专业：</ons-list-item>
+            <ons-list-item> 年级：</ons-list-item>
+            <ons-list-item> 老乡会QQ群：</ons-list-item>
+        </ons-list>
+    </ons-page>
+</ons-template>
+<!------------------------------------------------老乡会------------------------------------------------------>
+<!--------------------------------------------------我的学校------------------------------------------------>
+<ons-template id="mySchool">
+    <ons-page>
+        <ons-toolbar>
+            <div class="left">
+                <ons-back-button>Back</ons-back-button>
+            </div>
+            <div class="center">我的学校</div>
+        </ons-toolbar>
+        <ons-list style=" padding-top:10px;">
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('common', { animation : 'slide' } )"> 学校简介</ons-list-item>
+            <ons-list-item
+                    modifier="chevron" onclick="myNavigator.pushPage('common', { animation : 'slide' } )"> 学校领导班子
+            </ons-list-item>
+            <ons-list-item modifier="chevron"
+                           onclick="myNavigator.pushPage('common', { animation : 'slide' } )"> 荣誉校友
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="myNavigator.pushPage('common', { animation : 'slide' } )">
+                校园风光
+            </ons-list-item>
+        </ons-list>
+    </ons-page>
+</ons-template>
+<!--------------------------------------------------我的学校------------------------------------------------>
+<!--------------------------------------------------common content----------------------------------------->
+<ons-template id="common">
+    <ons-page>
+        <ons-toolbar>
+            <div class="left">
+                <ons-back-button>Back</ons-back-button>
+            </div>
+        </ons-toolbar>
+        <p>信息正在完善中...</p>
 
-	</script>
+    </ons-page>
+</ons-template>
+
+<!--------------------------------------------------common content----------------------------------------->
+<!------------------------------------------------help---------------------------------------------------------->
+<ons-template id="help">
+    <ons-page>
+        <ons-toolbar>
+            <div class="center">求助学长</div>
+        </ons-toolbar>
+        <ons-list>
+            <ons-list-header style="background-color:#33FFFF">联系方式</ons-list-header>
+            <ons-list-item>QQ：1234355667</ons-list-item>
+            <ons-list-item>微信：12234354364</ons-list-item>
+            <ons-list-item>手机号：183****4204</ons-list-item>
+
+            <ons-list-header style="background-color:#33FFFF">在线提问</ons-list-header>
+            <section style="padding:8px"> <textarea class="textarea" ng-model="text2" placeholder="描述你的问题并留下你的联系方式"
+                                                    style="width: 100%; height:150px;"></textarea></section>
+
+            <form action="http://w3school.com.cn/example/html/form_action.asp" method="get">
+                <input type="submit" value="Submit" id="sub" style="margin-top:5px;width:200px;height:40px;line-height:35px;border:none;background-color:#33CCFF;margin-left:80px;"/>
+            </form>
+            </ons-list-item> </ons-list>
+    </ons-page>
+</ons-template>
+
+<!------------------------------------------------help---------------------------------------------------------->
+<!-------------------------------------------------tags-------------------------------------------------------->
+<ons-template id="flow">
+    <ons-page>
+        <ons-toolbar>
+            <div class="left">
+                <ons-back-button>Back</ons-back-button>
+            </div>
+            <div class="center">报到流程</div>
+        </ons-toolbar>
+        <p>导入张恒首页的流程图</p>
+    </ons-page>
+</ons-template>
+<!-------------------------------------------------tags-------------------------------------------------------->
+<!-------------------------------------------------me-------------------------------------------------------->
+
+<ons-template id="myme">
+    <ons-navigator title="Navigator" var="meNavigator">
+        <ons-page>
+            <ons-toolbar>
+                <div class="left">
+                    <ons-back-button>Back</ons-back-button>
+                </div>
+                <div class="center">我的信息</div>
+            </ons-toolbar>
+            <ons-list>
+                <ons-list-header style="background-color:#33FFFF">基本信息</ons-list-header>
+                <ons-list-item modifier="chevron" onclick="meNavigator.pushPage('common', { animation : 'slide' } )">
+                    我的报到步骤
+                </ons-list-item>
+                <ons-list-item modifier="chevron" onclick="meNavigator.pushPage('medaoyuan', { animation : 'slide' } )"> 我的导员</ons-list-item>
+                <ons-list-item modifier="chevron"
+                               onclick="meNavigator.pushPage('common', { animation : 'slide' } )"> 我的学院介绍
+                </ons-list-item>
+                <ons-list-header style="background-color:#33FFFF">我的常用导航</ons-list-header>
+                <ons-list-item
+                        modifier="chevron" onclick="meNavigator.pushPage('daohang', { animation : 'slide' } )"> 到我的宿舍
+                </ons-list-item>
+                <ons-list-item modifier="chevron"
+                               onclick="meNavigator.pushPage('daohang', { animation : 'slide' } )"> 到我的学院
+                </ons-list-item>
+                <ons-list-header style="background-color:#33FFFF">账号管理</ons-list-header>
+                <ons-list-item modifier="chevron"
+                               onclick="alert1()"> <!--<input type="button" onclick="alert('确定退出吗？')" value="显示消息框" />--> 退出
+                </ons-list-item>
+            </ons-list>
+
+            <div style="margin:10px 0 0 10px;"></div>
+
+
+        </ons-page>
+    </ons-navigator>
+</ons-template>
+<!-------------------------------------------------me-------------------------------------------------------->
+<!----------------------------------------------我的导员----------------------------------------------------->
+<ons-template id="medaoyuan">
+    <ons-page>
+        <ons-toolbar>
+            <div class="left">
+                <ons-back-button>Back</ons-back-button>
+            </div>
+            <div class="center">我的导员</div>
+        </ons-toolbar>
+        <ons-list>
+            <ons-list-header style="background-color:#33FFFF">基本信息</ons-list-header>
+            <ons-list-item> 姓名：****</ons-list-item>
+            <ons-list-item> 性别：</ons-list-item>
+            <ons-list-item>
+                手机号：12312423523
+            </ons-list-item>
+            <ons-list-item> 微信：</ons-list-item>
+            <ons-list-item> QQ：</ons-list-item>
+            <ons-list-item> 教龄：</ons-list-item>
+            <ons-list-item> 职称：</ons-list-item>
+        </ons-list>
+    </ons-page>
+</ons-template>
+<!----------------------------------------------我的导员----------------------------------------------------->
+
+<script type="text/javascript">
+    function mapInit() {
+        //获取到达报到点的坐标
+        getLoc(stepNumber);
+        console.info("地图开始");
+        console.info(xloc);
+        console.info(yloc);
+
+
+        map = new AMap.Map("container", {
+            resizeEnable: true,
+            zoom: 13 //地图显示的缩放级别
+        });
+
+        map.addControl(toolBar);
+
+        walking = new AMap.Walking({
+            map: map,
+            panel: "panel"
+        });
+        //根据起终点坐标规划步行路线
+        console.info(xloc);
+        console.info(yloc);
+        walking.search([114.498730, 36.576073], [xloc, yloc]);
+    }
+
+    function nextStep() {
+        ons.notification.confirm({
+            message: '是否到达了目的地 ?',
+            title: '请确认',
+            buttonLabels: ['是', '否'],
+            callback: function (idx) {
+                switch (idx) {
+                        //yes
+                    case 0:
+                        stepNumber = stepNumber + 1;
+                        //写进数据库
+                        ajaxUtil.setStep(stepNumber);
+                        myNavigator.popPage();
+                        break;
+                        //no
+                    case 1:
+                        break;
+                }
+            }
+        });
+    }
+
+    function myNearby() {
+        var reqUrl = "";
+        var points = [{"lnglat":["114.498772","36.570935"],"name":"杜玉威"},{"lnglat":["114.497772","36.570935"],"name":"罗文斌"},{"lnglat":["114.498772","36.571935"],"name":"张恒"}];
+        //异步调用，获取每小时订单量数据
+        $.getJSON(reqUrl, function(result) {
+            //设置数据集
+            //points = result;
+
+        });
+
+        personMap = new AMap.Map("nearbyPersion", {
+            resizeEnable: true,
+            center: [114.498772, 36.570935],
+            zoom: 18
+        });
+
+        personMap.addControl(toolBar);
+
+        var mass = new AMap.MassMarks(points, {
+            url: 'http://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
+            anchor: new AMap.Pixel(3, 7),
+            size: new AMap.Size(10, 14),
+            opacity:0.7,
+            cursor:'pointer',
+            zIndex: 1
+        });
+        mass.on('click',function(e){
+            openInfo(e.data);
+        })
+        mass.setMap(personMap);
+
+    }
+
+    //在指定位置打开信息窗体
+    function openInfo(data) {
+        //构建信息窗体中显示的内容
+        console.info("信息窗体");
+        var msgpoint = new AMap.LngLat(data.lnglat.lng,data.lnglat.lat);
+        console.info(msgpoint);
+        var info = [];
+        info.push("<div><div><img style=\"float:left;\" src=\" http://webapi.amap.com/images/autonavi.png \"/></div> ");
+        info.push("<div style=\"padding:0px 0px 0px 4px;\"><b>姓名：" + data.name + "</b>");
+        //info.push("电话 : 010-84107000   邮编 : 100102");
+        infoWindow = new AMap.InfoWindow({
+            content: info.join("<br/>")  //使用默认信息窗体框样式，显示信息内容
+        });
+        infoWindow.open(personMap, msgpoint);
+
+    }
+
+
+</script>
 
 </body>
 </html>
